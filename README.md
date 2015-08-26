@@ -1,4 +1,6 @@
 # Friendable v0.1
+[![Build Status](https://api.travis-ci.org/gregoryduckworth/friendable.png?branch=master)](https://api.travis-ci.org/gregoryduckworth/friendable)
+[![PHP version](https://badge.fury.io/ph/gregoryduckworth%2Ffriendable.svg)](http://badge.fury.io/ph/gregoryduckworth%2Ffriendable)
 
 Add the possibility of friends quickly with the use of this trait.
 
@@ -11,12 +13,13 @@ $ composer require gregoryduckworth/friendable
 ```
 And then include the service providero within `config/app.php`
 
-``` php
+```php
 'providers' => [
     ...
     GregoryDuckworth\Friendable\FriendableServiceProvider::class,
     ...
 ];
+```
 
 At lastly you need to publish and run the migration.
 
