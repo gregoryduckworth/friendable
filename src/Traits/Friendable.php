@@ -123,4 +123,14 @@ trait Friendable
         $this->friends()->detach($friend->id);
     }
 
+    /**
+     * Method to check the status of a friendship
+     *
+     * @param Model $friend
+     */
+    public function friendshipStatus(Model $friend)
+    {
+        return $this->friends()->where('friend_id', $friend->id)->select('status')->first();
+    }
+
 }

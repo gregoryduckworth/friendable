@@ -1,6 +1,6 @@
-# Friendable v0.1
-[![Build Status](https://api.travis-ci.org/gregoryduckworth/friendable.png?branch=master)](https://api.travis-ci.org/gregoryduckworth/friendable)
-[![PHP version](https://badge.fury.io/ph/gregoryduckworth%2Ffriendable.svg)](http://badge.fury.io/ph/gregoryduckworth%2Ffriendable)
+# Friendable
+
+[![Latest Stable Version](https://poser.pugx.org/gregoryduckworth/friendable/v/stable)](https://packagist.org/packages/gregoryduckworth/friendable) [![Total Downloads](https://poser.pugx.org/gregoryduckworth/friendable/downloads)](https://packagist.org/packages/gregoryduckworth/friendable) [![Build Status](https://api.travis-ci.org/gregoryduckworth/friendable.png?branch=master)](https://api.travis-ci.org/gregoryduckworth/friendable) [![License](https://poser.pugx.org/gregoryduckworth/friendable/license)](https://packagist.org/packages/gregoryduckworth/friendable)
 
 Add the possibility of friends quickly with the use of this trait.
 

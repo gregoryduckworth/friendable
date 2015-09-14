@@ -2,5 +2,9 @@
 
 All Notable changes to `Friendable` will be documented in this file
 
-### Added
+### 0.2
+- Added fiendshipStatus helper
+- Changed enum values to strings to access friendshipStatus
+
+### 0.1
 - Initial commit

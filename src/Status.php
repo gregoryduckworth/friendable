@@ -7,8 +7,8 @@ namespace GregoryDuckworth\Friendable;
  */
 class Status
 {
-    const PENDING = 0;
-    const CONFIRMED = 1;
-    const AWAITING_APPROVAL = 2;
-    const BLOCKED = 3;
+    const PENDING = 'Pending';
+    const CONFIRMED = 'Confirmed';
+    const AWAITING_APPROVAL = 'Awaiting Approval';
+    const BLOCKED = 'Blocked';
 }
