@@ -86,9 +86,8 @@ class MigrationTest extends TestCase
             $table->timestamps();
         });
         
-        // Run the friends_users migration
-        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
-        $migration = new \CreateFriendsUsersTable();
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
         $migration->up();
         
         // Verify the table was created
@@ -124,9 +123,8 @@ class MigrationTest extends TestCase
             $table->timestamps();
         });
         
-        // Run the friends_users migration
-        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
-        $migration = new \CreateFriendsUsersTable();
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
         $migration->up();
         
         // Verify the table was created
@@ -162,9 +160,8 @@ class MigrationTest extends TestCase
             $table->timestamps();
         });
         
-        // Run the friends_users migration
-        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
-        $migration = new \CreateFriendsUsersTable();
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
         $migration->up();
         
         // Verify the table was created
@@ -200,9 +197,8 @@ class MigrationTest extends TestCase
             $table->timestamps();
         });
         
-        // Run the friends_users migration
-        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
-        $migration = new \CreateFriendsUsersTable();
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
         $migration->up();
         
         // Verify the table was created
@@ -243,9 +239,8 @@ class MigrationTest extends TestCase
             $table->timestamps();
         });
         
-        // Run the friends_users migration
-        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
-        $migration = new \CreateFriendsUsersTable();
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
         $migration->up();
         
         // Create a test user
