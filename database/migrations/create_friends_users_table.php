@@ -117,6 +117,11 @@ class CreateFriendsUsersTable extends Migration
                             return;
                         case 'char':
                             // Preserve the exact length for char columns (e.g., ULID uses char(26))
+                            // If metadata doesn't include length, query it from the database
+                            if ($length === null) {
+                                $length = $this->getColumnLength($connection, 'users', 'id');
+                            }
+                            // Only use default if we can't determine the actual length
                             $length = $length ?? 36;
                             $table->char($columnName, $length);
                             return;
@@ -126,6 +131,11 @@ class CreateFriendsUsersTable extends Migration
                         case 'string':
                         case 'varchar':
                             // Preserve the exact length for varchar columns
+                            // If metadata doesn't include length, query it from the database
+                            if ($length === null) {
+                                $length = $this->getColumnLength($connection, 'users', 'id');
+                            }
+                            // Only use default if we can't determine the actual length
                             $length = $length ?? 255;
                             $table->string($columnName, $length);
                             return;
