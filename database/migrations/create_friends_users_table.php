@@ -14,37 +14,9 @@ class CreateFriendsUsersTable extends Migration
     public function up()
     {
         Schema::create('friends_users', function (Blueprint $table) {
-            // Dynamically determine the column type based on users.id to maintain compatibility
-            // with apps that use integer, bigint, UUID, ULID, or string primary keys
-            $userIdColumnType = $this->getUserIdColumnType();
-            
-            // Map the users.id column type to the appropriate Blueprint method
-            switch ($userIdColumnType) {
-                case 'bigint':
-                    $table->unsignedBigInteger('friend_id');
-                    $table->unsignedBigInteger('user_id');
-                    break;
-                case 'uuid':
-                case 'char':
-                case 'guid':
-                    $table->uuid('friend_id');
-                    $table->uuid('user_id');
-                    break;
-                case 'ulid':
-                    $table->ulid('friend_id');
-                    $table->ulid('user_id');
-                    break;
-                case 'string':
-                case 'varchar':
-                    $table->string('friend_id');
-                    $table->string('user_id');
-                    break;
-                default:
-                    // Fallback for integer and other numeric types
-                    $table->unsignedInteger('friend_id');
-                    $table->unsignedInteger('user_id');
-                    break;
-            }
+            // Create foreign key columns that match the users.id definition exactly
+            $this->createMatchingColumn($table, 'friend_id');
+            $this->createMatchingColumn($table, 'user_id');
             
             $table->string('status');
 
@@ -56,16 +28,99 @@ class CreateFriendsUsersTable extends Migration
     }
     
     /**
-     * Determine the column type of the users.id column.
+     * Create a column that matches the users.id column definition exactly.
      *
-     * @return string
+     * @param \Illuminate\Database\Schema\Blueprint $table
+     * @param string $columnName
+     * @return void
      */
-    protected function getUserIdColumnType()
+    protected function createMatchingColumn($table, $columnName)
     {
-        $connection = Schema::connection(null);
-        $userTable = $connection->getColumnType('users', 'id');
+        $connection = Schema::getConnection();
+        $schemaBuilder = $connection->getSchemaBuilder();
         
-        return $userTable;
+        // Attempt to get full column information (Laravel 9.6+)
+        try {
+            if (method_exists($schemaBuilder, 'getColumns')) {
+                $columns = $schemaBuilder->getColumns('users');
+                $idColumn = collect($columns)->firstWhere('name', 'id');
+                
+                if ($idColumn) {
+                    $type = $idColumn['type_name'] ?? $idColumn['type'];
+                    $length = $idColumn['length'] ?? null;
+                    
+                    // Match the exact column definition including length
+                    switch (strtolower($type)) {
+                        case 'bigint':
+                        case 'biginteger':
+                            $table->unsignedBigInteger($columnName);
+                            return;
+                        case 'integer':
+                        case 'int':
+                            $table->unsignedInteger($columnName);
+                            return;
+                        case 'smallint':
+                        case 'smallinteger':
+                            $table->unsignedSmallInteger($columnName);
+                            return;
+                        case 'char':
+                            // Preserve the exact length for char columns (e.g., ULID uses char(26))
+                            $length = $length ?? 36;
+                            $table->char($columnName, $length);
+                            return;
+                        case 'uuid':
+                            $table->uuid($columnName);
+                            return;
+                        case 'string':
+                        case 'varchar':
+                            // Preserve the exact length for varchar columns
+                            $length = $length ?? 255;
+                            $table->string($columnName, $length);
+                            return;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Fall through to legacy detection
+        }
+        
+        // Fallback: use getColumnType (Laravel 9.0-9.5) or default to unsignedBigInteger
+        try {
+            if (method_exists($schemaBuilder, 'getColumnType')) {
+                $type = $schemaBuilder->getColumnType('users', 'id');
+                
+                // Note: This legacy path cannot preserve length information,
+                // so it uses Laravel's defaults for each type
+                switch (strtolower($type)) {
+                    case 'bigint':
+                    case 'biginteger':
+                        $table->unsignedBigInteger($columnName);
+                        return;
+                    case 'integer':
+                    case 'int':
+                        $table->unsignedInteger($columnName);
+                        return;
+                    case 'smallint':
+                    case 'smallinteger':
+                        $table->unsignedSmallInteger($columnName);
+                        return;
+                    case 'char':
+                    case 'uuid':
+                    case 'guid':
+                        $table->uuid($columnName);
+                        return;
+                    case 'string':
+                    case 'varchar':
+                        $table->string($columnName);
+                        return;
+                }
+            }
+        } catch (\Exception $e) {
+            // Fall through to default
+        }
+        
+        // Default fallback for modern Laravel apps
+        $table->unsignedBigInteger($columnName);
     }
 
     /**
