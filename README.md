@@ -6,7 +6,7 @@ Add the possibility of friends quickly with the use of this trait.
 
 ## Requirements
 
-- PHP 8.1+
+- PHP 8.2+
 - Laravel 9.6+, 10.x, 11.x, or 12.x
 
 ## Install

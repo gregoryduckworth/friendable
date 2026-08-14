@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 class MigrationTest extends TestCase
 {
     protected $capsule;
+    protected $originalGrammar;
     
     protected function setUp(): void
     {
@@ -36,10 +37,27 @@ class MigrationTest extends TestCase
             return $this->capsule->getConnection()->getSchemaBuilder();
         });
         Facade::setFacadeApplication($app);
+        
+        // Install custom SQLite grammar that preserves varchar lengths (Laravel 11+ compatibility)
+        // This ensures that char(26) and string(50) are stored with their lengths
+        $connection = $this->capsule->getConnection();
+        if ($connection->getDriverName() === 'sqlite') {
+            // Load the grammar class from the migration file
+            require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
+            $this->originalGrammar = $connection->getSchemaGrammar();
+            $connection->setSchemaGrammar(new \SQLiteGrammarWithLengths());
+        }
     }
     
     protected function tearDown(): void
     {
+        // Restore original grammar
+        if (isset($this->originalGrammar) && $this->originalGrammar) {
+            $connection = $this->capsule->getConnection();
+            if ($connection) {
+                $connection->setSchemaGrammar($this->originalGrammar);
+            }
+        }
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication(null);
         $this->capsule->getConnection()->disconnect();
@@ -142,6 +160,9 @@ class MigrationTest extends TestCase
         // Laravel 12+ uses generic varchar for string types in SQLite
         $this->assertSame('varchar', $userIdType['type'], 'user_id should be varchar type');
         $this->assertSame('varchar', $friendIdType['type'], 'friend_id should be varchar type');
+        // Verify length matches UUID (36 characters)
+        $this->assertSame(36, $userIdType['length'], 'user_id should have length 36 for UUID');
+        $this->assertSame(36, $friendIdType['length'], 'friend_id should have length 36 for UUID');
         
         // Clean up
         $migration->down();
@@ -179,6 +200,9 @@ class MigrationTest extends TestCase
         // Laravel 12+ uses generic varchar for string types in SQLite
         $this->assertSame('varchar', $userIdType['type'], 'user_id should be varchar type');
         $this->assertSame('varchar', $friendIdType['type'], 'friend_id should be varchar type');
+        // Verify length matches ULID (26 characters)
+        $this->assertSame(26, $userIdType['length'], 'user_id should have length 26 for ULID');
+        $this->assertSame(26, $friendIdType['length'], 'friend_id should have length 26 for ULID');
         
         // Clean up
         $migration->down();
@@ -216,6 +240,9 @@ class MigrationTest extends TestCase
         // Laravel 12+ uses generic varchar for string types in SQLite (without explicit length)
         $this->assertSame('varchar', $userIdType['type'], 'user_id should be varchar type');
         $this->assertSame('varchar', $friendIdType['type'], 'friend_id should be varchar type');
+        // Verify length matches custom string (50 characters)
+        $this->assertSame(50, $userIdType['length'], 'user_id should have length 50 for custom string');
+        $this->assertSame(50, $friendIdType['length'], 'friend_id should have length 50 for custom string');
         
         // Clean up
         $migration->down();

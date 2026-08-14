@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "Laravel Friendable Package",
   "scripts": {
-    "test": "export PATH=$HOME/.local/bin:$PATH && if command -v php >/dev/null 2>&1; then composer install && composer test; else echo 'PHP is required to run tests. Install PHP 8.1+ and Composer, then run: composer install && composer test' && exit 1; fi"
+    "test": "export PATH=$HOME/.local/bin:$PATH && if command -v php >/dev/null 2>&1; then composer install && composer test; else echo 'PHP is required to run tests. Install PHP 8.2+ and Composer, then run: composer install && composer test' && exit 1; fi"
   }
 }
