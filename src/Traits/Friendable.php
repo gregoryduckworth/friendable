@@ -2,7 +2,6 @@
 
 namespace GregoryDuckworth\Friendable\Traits;
 
-use Config;
 use GregoryDuckworth\Friendable\Status;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,7 +18,7 @@ trait Friendable
      */
     public function friends()
     {
-        return $this->belongsToMany(Config::get('auth.model'), 'friends_users', 'user_id', 'friend_id')
+        return $this->belongsToMany(static::class, 'friends_users', 'user_id', 'friend_id')
             ->withPivot('status');
     }
 

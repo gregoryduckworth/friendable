@@ -1,5 +1,7 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * Gather the appropriate trait
  */
@@ -11,7 +13,7 @@ class TestingTraitStub
 /**
  *
  */
-class TraitFriendableTest extends PHPUnit_Framework_TestCase
+class TraitFriendableTest extends TestCase
 {
     // Trait within test scope
     public $trait;
@@ -19,8 +21,9 @@ class TraitFriendableTest extends PHPUnit_Framework_TestCase
     /**
      * Setup the trait
      */
-    public function setUp()
+    protected function setUp(): void
     {
+        parent::setUp();
         $this->trait = new TestingTraitStub;
     }
 

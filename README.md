@@ -4,6 +4,11 @@
 
 Add the possibility of friends quickly with the use of this trait.
 
+## Requirements
+
+- PHP 8.2+
+- Laravel 9.6+, 10.x, 11.x, or 12.x
+
 ## Install
 
 Via Composer
@@ -11,20 +16,14 @@ Via Composer
 ``` bash
 $ composer require gregoryduckworth/friendable
 ```
-And then include the service providero within `config/app.php`
 
-```php
-'providers' => [
-    ...
-    GregoryDuckworth\Friendable\FriendableServiceProvider::class,
-    ...
-];
-```
+The service provider will be automatically registered via Laravel's package auto-discovery.
 
-At lastly you need to publish and run the migration.
+Publish and run the migration:
 
-```
-php artisan vendor:publish && php artisan migrate
+```bash
+php artisan vendor:publish --provider="GregoryDuckworth\Friendable\FriendableServiceProvider" --tag="migrations"
+php artisan migrate
 ```
 
 ## Usage
