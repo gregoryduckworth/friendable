@@ -13,8 +13,8 @@ class CreateFriendsUsersTable extends Migration
     public function up()
     {
         Schema::create('friends_users', function (Blueprint $table) {
-            $table->integer('friend_id')->unsigned();
-            $table->integer('user_id')->unsigned();
+            $table->unsignedBigInteger('friend_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('status');
 
             $table->foreign('user_id')->references('id')->on('users');
