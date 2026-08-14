@@ -18,7 +18,7 @@ trait Friendable
      */
     public function friends()
     {
-        return $this->belongsToMany(config('auth.providers.users.model'), 'friends_users', 'user_id', 'friend_id')
+        return $this->belongsToMany(static::class, 'friends_users', 'user_id', 'friend_id')
             ->withPivot('status');
     }
 

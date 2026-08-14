@@ -15,15 +15,35 @@ class CreateFriendsUsersTable extends Migration
     {
         Schema::create('friends_users', function (Blueprint $table) {
             // Dynamically determine the column type based on users.id to maintain compatibility
-            // with apps that still use integer IDs from older Laravel versions
+            // with apps that use integer, bigint, UUID, ULID, or string primary keys
             $userIdColumnType = $this->getUserIdColumnType();
             
-            if ($userIdColumnType === 'bigint') {
-                $table->unsignedBigInteger('friend_id');
-                $table->unsignedBigInteger('user_id');
-            } else {
-                $table->unsignedInteger('friend_id');
-                $table->unsignedInteger('user_id');
+            // Map the users.id column type to the appropriate Blueprint method
+            switch ($userIdColumnType) {
+                case 'bigint':
+                    $table->unsignedBigInteger('friend_id');
+                    $table->unsignedBigInteger('user_id');
+                    break;
+                case 'uuid':
+                case 'char':
+                case 'guid':
+                    $table->uuid('friend_id');
+                    $table->uuid('user_id');
+                    break;
+                case 'ulid':
+                    $table->ulid('friend_id');
+                    $table->ulid('user_id');
+                    break;
+                case 'string':
+                case 'varchar':
+                    $table->string('friend_id');
+                    $table->string('user_id');
+                    break;
+                default:
+                    // Fallback for integer and other numeric types
+                    $table->unsignedInteger('friend_id');
+                    $table->unsignedInteger('user_id');
+                    break;
             }
             
             $table->string('status');
