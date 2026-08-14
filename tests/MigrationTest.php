@@ -223,4 +223,64 @@ class MigrationTest extends TestCase
         $migration->down();
         Capsule::schema()->dropIfExists('users');
     }
+    
+    /**
+     * Test that foreign key constraints are actually enforced
+     * This verifies the column types are compatible at the database level
+     */
+    public function testForeignKeyConstraintsAreEnforced()
+    {
+        // Enable foreign key enforcement in SQLite
+        $connection = $this->capsule->getConnection();
+        $connection->statement('PRAGMA foreign_keys = ON');
+        
+        // Create users table with bigInteger ID
+        Capsule::schema()->create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+        
+        // Run the friends_users migration
+        require_once __DIR__ . '/../database/migrations/create_friends_users_table.php';
+        $migration = new \CreateFriendsUsersTable();
+        $migration->up();
+        
+        // Create a test user
+        $userId = $connection->table('users')->insertGetId([
+            'name' => 'Test User',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        
+        // Valid insert: both user_id and friend_id reference existing users
+        $connection->table('friends_users')->insert([
+            'user_id' => $userId,
+            'friend_id' => $userId,
+            'status' => 'pending',
+        ]);
+        $this->assertSame(1, $connection->table('friends_users')->count(), 'Valid foreign key reference should succeed');
+        
+        // Invalid insert: friend_id references non-existent user
+        // This should fail if foreign keys are properly enforced
+        $caught = false;
+        try {
+            $connection->table('friends_users')->insert([
+                'user_id' => $userId,
+                'friend_id' => 99999,
+                'status' => 'pending',
+            ]);
+        } catch (\Exception $e) {
+            $caught = true;
+            $this->assertStringContainsString('foreign key', strtolower($e->getMessage()), 'Exception should mention foreign key constraint');
+        }
+        $this->assertTrue($caught, 'Insert with invalid foreign key should fail');
+        
+        // Verify only the valid insert succeeded
+        $this->assertSame(1, $connection->table('friends_users')->count(), 'Only valid inserts should be in the table');
+        
+        // Clean up
+        $migration->down();
+        Capsule::schema()->dropIfExists('users');
+    }
 }

@@ -194,8 +194,7 @@ class CreateFriendsUsersTable extends Migration
         // risk creating an incompatible foreign key column
         throw new \RuntimeException(
             "Unable to determine the column type for users.id. " .
-            "This migration requires Laravel 9.6+ or doctrine/dbal for Laravel 9.0-9.5. " .
-            "Please ensure the required dependencies are installed."
+            "Please ensure the users table exists before running this migration."
         );
     }
 
