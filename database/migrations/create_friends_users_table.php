@@ -80,6 +80,53 @@ return new class extends Migration
     }
     
     /**
+     * Determine if an integer column is unsigned by checking the database.
+     *
+     * @param \Illuminate\Database\Connection $connection
+     * @param string $tableName
+     * @param string $columnName
+     * @return bool
+     */
+    protected function isColumnUnsigned($connection, $tableName, $columnName)
+    {
+        $driverName = $connection->getDriverName();
+        
+        try {
+            if ($driverName === 'mysql') {
+                $result = $connection->selectOne(
+                    "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                    [$connection->getDatabaseName(), $tableName, $columnName]
+                );
+                return $result && stripos($result->COLUMN_TYPE, 'unsigned') !== false;
+            } elseif ($driverName === 'pgsql') {
+                // PostgreSQL doesn't have unsigned integers; all integers are signed
+                return false;
+            } elseif ($driverName === 'sqlite') {
+                // SQLite doesn't enforce signedness; check the CREATE TABLE statement
+                $result = $connection->selectOne(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
+                    [$tableName]
+                );
+                if ($result && preg_match("/{$columnName}\s+[a-z]+\s+unsigned/i", $result->sql)) {
+                    return true;
+                }
+                // Default to unsigned for INTEGER PRIMARY KEY AUTOINCREMENT (SQLite convention)
+                return false;
+            } elseif ($driverName === 'sqlsrv') {
+                // SQL Server doesn't have unsigned integers; all integers are signed
+                return false;
+            }
+        } catch (\Exception $e) {
+            // If we can't determine signedness, default to unsigned for safety
+            // (unsigned is more common in Laravel migrations)
+        }
+        
+        // Default to unsigned (most common case)
+        return true;
+    }
+    
+    /**
      * Create a column that matches the users.id column definition exactly.
      *
      * @param \Illuminate\Database\Schema\Blueprint $table
@@ -101,19 +148,37 @@ return new class extends Migration
                     $type = $idColumn['type_name'] ?? $idColumn['type'];
                     $length = $idColumn['length'] ?? null;
                     
-                    // Match the exact column definition including length
+                    // Match the exact column definition including length and signedness
                     switch (strtolower($type)) {
                         case 'bigint':
                         case 'biginteger':
-                            $table->unsignedBigInteger($columnName);
+                            // Check if the column is unsigned
+                            $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                            if ($unsigned) {
+                                $table->unsignedBigInteger($columnName);
+                            } else {
+                                $table->bigInteger($columnName);
+                            }
                             return;
                         case 'integer':
                         case 'int':
-                            $table->unsignedInteger($columnName);
+                            // Check if the column is unsigned
+                            $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                            if ($unsigned) {
+                                $table->unsignedInteger($columnName);
+                            } else {
+                                $table->integer($columnName);
+                            }
                             return;
                         case 'smallint':
                         case 'smallinteger':
-                            $table->unsignedSmallInteger($columnName);
+                            // Check if the column is unsigned
+                            $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                            if ($unsigned) {
+                                $table->unsignedSmallInteger($columnName);
+                            } else {
+                                $table->smallInteger($columnName);
+                            }
                             return;
                         case 'char':
                             // Preserve the exact length for char columns (e.g., ULID uses char(26))
@@ -161,15 +226,33 @@ return new class extends Migration
                 switch (strtolower($type)) {
                     case 'bigint':
                     case 'biginteger':
-                        $table->unsignedBigInteger($columnName);
+                        // Check if the column is unsigned
+                        $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                        if ($unsigned) {
+                            $table->unsignedBigInteger($columnName);
+                        } else {
+                            $table->bigInteger($columnName);
+                        }
                         return;
                     case 'integer':
                     case 'int':
-                        $table->unsignedInteger($columnName);
+                        // Check if the column is unsigned
+                        $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                        if ($unsigned) {
+                            $table->unsignedInteger($columnName);
+                        } else {
+                            $table->integer($columnName);
+                        }
                         return;
                     case 'smallint':
                     case 'smallinteger':
-                        $table->unsignedSmallInteger($columnName);
+                        // Check if the column is unsigned
+                        $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
+                        if ($unsigned) {
+                            $table->unsignedSmallInteger($columnName);
+                        } else {
+                            $table->smallInteger($columnName);
+                        }
                         return;
                     case 'char':
                         // Use exact length for char columns (e.g., ULID = 26, UUID = 36)

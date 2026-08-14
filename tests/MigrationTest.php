@@ -223,6 +223,42 @@ class MigrationTest extends TestCase
     }
     
     /**
+     * Test migration works with signed integer user ID (non-standard but valid)
+     */
+    public function testMigrationWithSignedIntegerUserId()
+    {
+        // Create users table with signed integer ID (without unsigned)
+        Capsule::schema()->create('users', function (Blueprint $table) {
+            $table->integer('id')->primary();
+            $table->string('name');
+            $table->timestamps();
+        });
+        
+        // Run the friends_users migration (anonymous class)
+        $migration = require __DIR__ . '/../database/migrations/create_friends_users_table.php';
+        $migration->up();
+        
+        // Verify the table was created
+        $this->assertTrue(Capsule::schema()->hasTable('friends_users'));
+        
+        // Verify the columns exist
+        $this->assertTrue(Capsule::schema()->hasColumn('friends_users', 'user_id'));
+        $this->assertTrue(Capsule::schema()->hasColumn('friends_users', 'friend_id'));
+        
+        // Verify column types match users.id (integer for SQLite)
+        $userIdType = $this->getColumnType('friends_users', 'user_id');
+        $friendIdType = $this->getColumnType('friends_users', 'friend_id');
+        $this->assertNotNull($userIdType, 'user_id column type should be detectable');
+        $this->assertNotNull($friendIdType, 'friend_id column type should be detectable');
+        $this->assertSame('integer', $userIdType['type'], 'user_id should be integer type');
+        $this->assertSame('integer', $friendIdType['type'], 'friend_id should be integer type');
+        
+        // Clean up
+        $migration->down();
+        Capsule::schema()->dropIfExists('users');
+    }
+    
+    /**
      * Test that foreign key constraints are actually enforced
      * This verifies the column types are compatible at the database level
      */
