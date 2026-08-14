@@ -28,6 +28,34 @@ return new class extends Migration
     }
     
     /**
+     * Normalize database-specific type names to generic Laravel types.
+     *
+     * @param string $type
+     * @return string
+     */
+    protected function normalizeTypeName($type)
+    {
+        $type = strtolower($type);
+        
+        // PostgreSQL native type mappings
+        $map = [
+            'int8' => 'bigint',
+            'int4' => 'integer',
+            'int2' => 'smallint',
+            'bpchar' => 'char',
+            // MySQL synonyms
+            'int' => 'integer',
+            'tinyint' => 'smallint',
+            // Common aliases
+            'biginteger' => 'bigint',
+            'smallinteger' => 'smallint',
+            'guid' => 'uuid',
+        ];
+        
+        return $map[$type] ?? $type;
+    }
+    
+    /**
      * Get the actual length of a column from the database.
      *
      * @param \Illuminate\Database\Connection $connection
@@ -148,10 +176,12 @@ return new class extends Migration
                     $type = $idColumn['type_name'] ?? $idColumn['type'];
                     $length = $idColumn['length'] ?? null;
                     
+                    // Normalize database-specific type names (e.g., PostgreSQL int8 -> bigint)
+                    $type = $this->normalizeTypeName($type);
+                    
                     // Match the exact column definition including length and signedness
-                    switch (strtolower($type)) {
+                    switch ($type) {
                         case 'bigint':
-                        case 'biginteger':
                             // Check if the column is unsigned
                             $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                             if ($unsigned) {
@@ -161,7 +191,6 @@ return new class extends Migration
                             }
                             return;
                         case 'integer':
-                        case 'int':
                             // Check if the column is unsigned
                             $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                             if ($unsigned) {
@@ -171,7 +200,6 @@ return new class extends Migration
                             }
                             return;
                         case 'smallint':
-                        case 'smallinteger':
                             // Check if the column is unsigned
                             $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                             if ($unsigned) {
@@ -216,16 +244,18 @@ return new class extends Migration
             if (method_exists($schemaBuilder, 'getColumnType')) {
                 $type = $schemaBuilder->getColumnType('users', 'id');
                 
+                // Normalize database-specific type names (e.g., PostgreSQL int8 -> bigint)
+                $type = $this->normalizeTypeName($type);
+                
                 // For char/varchar types, retrieve the actual length from the database
                 // to ensure foreign key compatibility
                 $length = null;
-                if (in_array(strtolower($type), ['char', 'string', 'varchar'])) {
+                if (in_array($type, ['char', 'string', 'varchar'])) {
                     $length = $this->getColumnLength($connection, 'users', 'id');
                 }
                 
-                switch (strtolower($type)) {
+                switch ($type) {
                     case 'bigint':
-                    case 'biginteger':
                         // Check if the column is unsigned
                         $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                         if ($unsigned) {
@@ -235,7 +265,6 @@ return new class extends Migration
                         }
                         return;
                     case 'integer':
-                    case 'int':
                         // Check if the column is unsigned
                         $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                         if ($unsigned) {
@@ -245,7 +274,6 @@ return new class extends Migration
                         }
                         return;
                     case 'smallint':
-                    case 'smallinteger':
                         // Check if the column is unsigned
                         $unsigned = $this->isColumnUnsigned($connection, 'users', 'id');
                         if ($unsigned) {
@@ -264,7 +292,6 @@ return new class extends Migration
                         }
                         return;
                     case 'uuid':
-                    case 'guid':
                         $table->uuid($columnName);
                         return;
                     case 'string':
