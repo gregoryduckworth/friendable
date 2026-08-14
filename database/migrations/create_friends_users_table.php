@@ -28,6 +28,58 @@ class CreateFriendsUsersTable extends Migration
     }
     
     /**
+     * Get the actual length of a column from the database.
+     *
+     * @param \Illuminate\Database\Connection $connection
+     * @param string $tableName
+     * @param string $columnName
+     * @return int|null
+     */
+    protected function getColumnLength($connection, $tableName, $columnName)
+    {
+        $driverName = $connection->getDriverName();
+        
+        try {
+            if ($driverName === 'mysql') {
+                $result = $connection->selectOne(
+                    "SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                    [$connection->getDatabaseName(), $tableName, $columnName]
+                );
+                return $result->CHARACTER_MAXIMUM_LENGTH ?? null;
+            } elseif ($driverName === 'pgsql') {
+                $result = $connection->selectOne(
+                    "SELECT character_maximum_length FROM information_schema.columns 
+                     WHERE table_name = ? AND column_name = ?",
+                    [$tableName, $columnName]
+                );
+                return $result->character_maximum_length ?? null;
+            } elseif ($driverName === 'sqlite') {
+                $result = $connection->selectOne(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
+                    [$tableName]
+                );
+                // Parse CREATE TABLE statement to extract length
+                // Example: id char(26) or id varchar(255)
+                if ($result && preg_match("/{$columnName}\s+(?:var)?char\((\d+)\)/i", $result->sql, $matches)) {
+                    return (int)$matches[1];
+                }
+            } elseif ($driverName === 'sqlsrv') {
+                $result = $connection->selectOne(
+                    "SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_NAME = ? AND COLUMN_NAME = ?",
+                    [$tableName, $columnName]
+                );
+                return $result->CHARACTER_MAXIMUM_LENGTH ?? null;
+            }
+        } catch (\Exception $e) {
+            // Return null if unable to determine length
+        }
+        
+        return null;
+    }
+    
+    /**
      * Create a column that matches the users.id column definition exactly.
      *
      * @param \Illuminate\Database\Schema\Blueprint $table
@@ -84,13 +136,18 @@ class CreateFriendsUsersTable extends Migration
             // Fall through to legacy detection
         }
         
-        // Fallback: use getColumnType (Laravel 9.0-9.5) or default to unsignedBigInteger
+        // Fallback: use getColumnType (Laravel 9.0-9.5) with raw column length query
         try {
             if (method_exists($schemaBuilder, 'getColumnType')) {
                 $type = $schemaBuilder->getColumnType('users', 'id');
                 
-                // Note: This legacy path cannot preserve length information,
-                // so it uses Laravel's defaults for each type
+                // For char/varchar types, retrieve the actual length from the database
+                // to ensure foreign key compatibility
+                $length = null;
+                if (in_array(strtolower($type), ['char', 'string', 'varchar'])) {
+                    $length = $this->getColumnLength($connection, 'users', 'id');
+                }
+                
                 switch (strtolower($type)) {
                     case 'bigint':
                     case 'biginteger':
@@ -105,13 +162,27 @@ class CreateFriendsUsersTable extends Migration
                         $table->unsignedSmallInteger($columnName);
                         return;
                     case 'char':
+                        // Use exact length for char columns (e.g., ULID = 26, UUID = 36)
+                        if ($length !== null) {
+                            $table->char($columnName, $length);
+                        } else {
+                            // Safe default for UUID if length cannot be determined
+                            $table->uuid($columnName);
+                        }
+                        return;
                     case 'uuid':
                     case 'guid':
                         $table->uuid($columnName);
                         return;
                     case 'string':
                     case 'varchar':
-                        $table->string($columnName);
+                        // Use exact length for varchar columns
+                        if ($length !== null) {
+                            $table->string($columnName, $length);
+                        } else {
+                            // Safe default if length cannot be determined
+                            $table->string($columnName);
+                        }
                         return;
                 }
             }
