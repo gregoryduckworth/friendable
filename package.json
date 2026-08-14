@@ -1,0 +1,8 @@
+{
+  "name": "friendable",
+  "version": "1.0.0",
+  "description": "Laravel Friendable Package",
+  "scripts": {
+    "test": "command -v php >/dev/null 2>&1 && composer install && composer test || echo 'PHP is required to run tests. Install PHP 8.1+ and Composer, then run: composer install && composer test'"
+  }
+}

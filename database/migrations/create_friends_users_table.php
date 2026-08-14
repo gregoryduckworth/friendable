@@ -31,6 +31,6 @@ class CreateFriendsUsersTable extends Migration
      */
     public function down()
     {
-        Schema::drop('friends_users');
+        Schema::dropIfExists('friends_users');
     }
 }
