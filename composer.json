@@ -38,5 +38,12 @@
     },
     "scripts": {
         "test": "phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "GregoryDuckworth\\Friendable\\FriendableServiceProvider"
+            ]
+        }
     }
 }

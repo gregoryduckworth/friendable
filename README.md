@@ -11,20 +11,14 @@ Via Composer
 ``` bash
 $ composer require gregoryduckworth/friendable
 ```
-And then include the service providero within `config/app.php`
 
-```php
-'providers' => [
-    ...
-    GregoryDuckworth\Friendable\FriendableServiceProvider::class,
-    ...
-];
-```
+The service provider will be automatically registered via Laravel's package auto-discovery.
 
-At lastly you need to publish and run the migration.
+Publish and run the migration:
 
-```
-php artisan vendor:publish && php artisan migrate
+```bash
+php artisan vendor:publish --provider="GregoryDuckworth\Friendable\FriendableServiceProvider" --tag="migrations"
+php artisan migrate
 ```
 
 ## Usage
